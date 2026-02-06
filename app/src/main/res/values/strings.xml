@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">SQL</string>
+    <string name="display_error">Ошибка отображения: %s</string>
+    <string name="no_data">Нет данных в базе</string>
+    <string name="people_in_database">Люди в базе данных:</string>
+    <string name="person_format">%1$d. %2$s, возраст: %3$d</string>
+    <string name="total_records">Всего записей: %d</string>
 </resources>

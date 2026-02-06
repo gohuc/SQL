@@ -1,24 +1,33 @@
 package com.example.sql
 
+import android.R.attr.hint
 import android.os.Bundle
+import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.example.sql.databinding.TestBinding
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var dbHelper: SQLHelper
     private lateinit var personRepository: PersonRepository
+    private lateinit var  binding: TestBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.test)
+        binding = TestBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         initDatabase()
         addTestData()
         showDataOnScreen()
+        enableDeleteAll()
+        enableDeleteById()
+        enableEditById()
     }
+
 
     private fun initDatabase() {
         dbHelper = SQLHelper(this)
@@ -39,17 +48,14 @@ class MainActivity : AppCompatActivity() {
     private fun showDataOnScreen() {
         try {
             val persons = personRepository.getAllPersons()
-            val container = findViewById<LinearLayout>(R.id.text)
-            if (container == null) {
-                showSimpleDisplay(persons)
-            } else {
+            val container = binding.data
                 showInContainer(container, persons)
-            }
 
         } catch (e: Exception) {
             Toast.makeText(this, "Ошибка отображения: ${e.message}", Toast.LENGTH_LONG).show()
         }
     }
+
 
     private fun showInContainer(container: LinearLayout, persons: List<Person>) {
         container.removeAllViews()
@@ -85,19 +91,102 @@ class MainActivity : AppCompatActivity() {
         container.addView(summary)
     }
 
-    private fun showSimpleDisplay(persons: List<Person>) {
-        val personList = persons.joinToString("\n") {
-            "${it.id}. ${it.name}, возраст: ${it.age}"
+    private fun enableDeleteAll(){
+        binding.deleteall.setOnClickListener {
+            binding.data.visibility = View.GONE
+            binding.buttons.visibility = View.GONE
+            binding.confirm.visibility = View.VISIBLE
+            binding.yesbtn.setOnClickListener {
+                val deleted = personRepository.deletePerson()
+                showDataOnScreen()
+                binding.data.visibility = View.VISIBLE
+                binding.buttons.visibility = View.VISIBLE
+                binding.confirm.visibility = View.GONE
+            }
+            binding.cancelbtn.setOnClickListener {
+                showDataOnScreen()
+                binding.buttons.visibility = View.VISIBLE
+                binding.data.visibility = View.VISIBLE
+            }
         }
-
-        val message = if (persons.isNotEmpty()) {
-            "Найдено ${persons.size} записей:\n$personList"
-        } else {
-            "База данных пуста"
+    }
+    private fun enableDeleteById(){
+        binding.deletebyid.setOnClickListener {
+            binding.data.visibility = View.GONE
+            binding.buttons.visibility = View.GONE
+            binding.deleteconfirmid.visibility = View.VISIBLE
+            binding.deletebtn.setOnClickListener {
+                val idText = binding.deletetext.text.toString()
+                if (idText.isBlank()){
+                    Toast.makeText(this, "Введите id", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+                val deleted = personRepository.deletePersonByID(idText.toLong())
+                if (deleted > 0) {
+                    Toast.makeText(this, "Запись удалена", Toast.LENGTH_SHORT).show()
+                } else{
+                    Toast.makeText(this, "Запись с таким id не найдена", Toast.LENGTH_SHORT).show()
+                }
+                showDataOnScreen()
+                binding.deleteconfirmid.visibility = View.GONE
+                binding.data.visibility= View.VISIBLE
+                binding.buttons.visibility = View.VISIBLE
+            }
+            binding.nobtn.setOnClickListener {
+                showDataOnScreen()
+                binding.buttons.visibility = View.VISIBLE
+                binding.data.visibility = View.VISIBLE
+                binding.deleteconfirmid.visibility = View.GONE
+            }
         }
-        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
-        persons.forEach { person ->
-            println("Person: ${person.id}, ${person.name}, ${person.age}")
+    }
+    private fun enableEditById(){
+        binding.editbyid.setOnClickListener {
+            binding.data.visibility = View.GONE
+            binding.buttons.visibility = View.GONE
+            binding.edit.visibility = View.VISIBLE
+            binding.editbtn.setOnClickListener {
+                val editText = binding.edittext.text.toString()
+                if (editText.isBlank()){
+                    Toast.makeText(this, "Введите id", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+                val person = personRepository.getPersonById(editText.toLong())
+                if (person == null){
+                    Toast.makeText(this, "Введите id", Toast.LENGTH_SHORT).show()
+                }else{
+                    binding.edit.visibility = View.GONE
+                    binding.editor.visibility = View.VISIBLE
+                    binding.nametext.setText(person.name)
+                    binding.agetext.setText(person.age)
+                }
+                val nameText = binding.edittext.text.toString()
+                val ageText = binding.edittext.text.toString()
+                if (nameText.isBlank()){
+                    Toast.makeText(this, "Введите имя", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+                if (ageText.isBlank()){
+                    Toast.makeText(this, "Введите возраст", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+                val updated = personRepository.updatePersonByID(editText.toLong(), nameText.toString(), ageText.toInt())
+                if (updated > 0) {
+                    Toast.makeText(this, "Запись отредактировна", Toast.LENGTH_SHORT).show()
+                } else{
+                    Toast.makeText(this, "Запись с таким id не найдена", Toast.LENGTH_SHORT).show()
+                }
+                showDataOnScreen()
+                binding.editor.visibility = View.GONE
+                binding.data.visibility= View.VISIBLE
+                binding.buttons.visibility = View.VISIBLE
+            }
+            binding.otmenabtn.setOnClickListener {
+                showDataOnScreen()
+                binding.buttons.visibility = View.VISIBLE
+                binding.data.visibility = View.VISIBLE
+                binding.editor.visibility = View.GONE
+            }
         }
     }
 

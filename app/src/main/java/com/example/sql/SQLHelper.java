@@ -13,7 +13,7 @@ public class SQLHelper extends SQLiteOpenHelper {
             "CREATE TABLE Person (" +
                     "_id INTEGER PRIMARY KEY AUTOINCREMENT," +
                     "name TEXT NOT NULL," +
-                    "age TEXT NOT NULL)";
+                    "age INTEGER NOT NULL)";
 
     public SQLHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
