@@ -1,7 +1,6 @@
 package com.example.sql
 
 import android.content.ContentValues
-import android.database.sqlite.SQLiteDatabase
 
 class PersonRepository(private val dbHelper: SQLHelper) {
 

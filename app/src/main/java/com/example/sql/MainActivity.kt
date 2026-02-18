@@ -49,7 +49,7 @@ class MainActivity : AppCompatActivity() {
         try {
             val persons = personRepository.getAllPersons()
             val container = binding.data
-                showInContainer(container, persons)
+            showInContainer(container, persons)
 
         } catch (e: Exception) {
             Toast.makeText(this, "Ошибка отображения: ${e.message}", Toast.LENGTH_LONG).show()
@@ -140,53 +140,99 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-    private fun enableEditById(){
+    private fun enableEditById() {
+        var currentEditId: Long? = null
+
         binding.editbyid.setOnClickListener {
             binding.data.visibility = View.GONE
             binding.buttons.visibility = View.GONE
             binding.edit.visibility = View.VISIBLE
-            binding.editbtn.setOnClickListener {
-                val editText = binding.edittext.text.toString()
-                if (editText.isBlank()){
-                    Toast.makeText(this, "Введите id", Toast.LENGTH_SHORT).show()
-                    return@setOnClickListener
-                }
-                val person = personRepository.getPersonById(editText.toLong())
-                if (person == null){
-                    Toast.makeText(this, "Введите id", Toast.LENGTH_SHORT).show()
-                }else{
-                    binding.edit.visibility = View.GONE
-                    binding.editor.visibility = View.VISIBLE
-                    binding.nametext.setText(person.name)
-                    binding.agetext.setText(person.age)
-                }
-                val nameText = binding.edittext.text.toString()
-                val ageText = binding.edittext.text.toString()
-                if (nameText.isBlank()){
-                    Toast.makeText(this, "Введите имя", Toast.LENGTH_SHORT).show()
-                    return@setOnClickListener
-                }
-                if (ageText.isBlank()){
-                    Toast.makeText(this, "Введите возраст", Toast.LENGTH_SHORT).show()
-                    return@setOnClickListener
-                }
-                val updated = personRepository.updatePersonByID(editText.toLong(), nameText.toString(), ageText.toInt())
-                if (updated > 0) {
-                    Toast.makeText(this, "Запись отредактировна", Toast.LENGTH_SHORT).show()
-                } else{
-                    Toast.makeText(this, "Запись с таким id не найдена", Toast.LENGTH_SHORT).show()
-                }
-                showDataOnScreen()
-                binding.editor.visibility = View.GONE
-                binding.data.visibility= View.VISIBLE
-                binding.buttons.visibility = View.VISIBLE
-            }
-            binding.otmenabtn.setOnClickListener {
-                showDataOnScreen()
-                binding.buttons.visibility = View.VISIBLE
+            binding.editor.visibility = View.GONE
+            binding.backbtn.setOnClickListener {
                 binding.data.visibility = View.VISIBLE
-                binding.editor.visibility = View.GONE
+                binding.buttons.visibility = View.VISIBLE
+                binding.edit.visibility = View.GONE
+                binding.edittext.text.clear()
             }
+            currentEditId = null
+        }
+        binding.editbtn.setOnClickListener {
+            val idText = binding.edittext.text.toString()
+            if (idText.isBlank()) {
+                Toast.makeText(this, "Введите id", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            val person = personRepository.getPersonById(idText.toLong())
+            if (person == null) {
+                Toast.makeText(this, "Пользователь с таким id не найден", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            } else {
+                currentEditId = person.id
+
+                binding.edit.visibility = View.GONE
+                binding.editor.visibility = View.VISIBLE
+                binding.nametext.setText(person.name)
+                binding.agetext.setText(person.age.toString())
+            }
+        }
+
+        binding.applybtn?.setOnClickListener {
+            val id = currentEditId
+            if (id == null) {
+                Toast.makeText(this, "Ошибка: ID не найден", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            val nameText = binding.nametext.text.toString()
+            val ageText = binding.agetext.text.toString()
+
+            if (nameText.isBlank()) {
+                Toast.makeText(this, "Введите имя", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            if (ageText.isBlank()) {
+                Toast.makeText(this, "Введите возраст", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            try {
+                val updated = personRepository.updatePersonByID(
+                    id,
+                    nameText,
+                    ageText.toInt()
+                )
+
+                if (updated > 0) {
+                    Toast.makeText(this, "Запись отредактирована", Toast.LENGTH_SHORT).show()
+
+                    showDataOnScreen()
+                    binding.editor.visibility = View.GONE
+                    binding.data.visibility = View.VISIBLE
+                    binding.buttons.visibility = View.VISIBLE
+                    binding.edittext.text.clear()
+                    binding.nametext.text.clear()
+                    binding.agetext.text.clear()
+                    currentEditId = null
+                } else {
+                    Toast.makeText(this, "Ошибка при обновлении записи", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: NumberFormatException) {
+                Toast.makeText(this, "Возраст должен быть числом", Toast.LENGTH_SHORT).show()
+            }
+        }
+        binding.otmenabtn.setOnClickListener {
+            showDataOnScreen()
+            binding.buttons.visibility = View.VISIBLE
+            binding.data.visibility = View.VISIBLE
+            binding.editor.visibility = View.GONE
+            binding.edit.visibility = View.GONE
+
+            binding.edittext.text.clear()
+            binding.nametext.text.clear()
+            binding.agetext.text.clear()
+            currentEditId = null
         }
     }
 
